@@ -1,0 +1,215 @@
+package programming.set7.life;
+
+import java.awt.Color;
+import acm.graphics.GRect;
+import acm.program.GraphicsProgram;
+import acm.util.RandomGenerator;
+
+/**
+ * GameOfLife
+ *
+ * This class is an implementation of Conway's Game Of Life.
+ */
+public class GameOfLife extends GraphicsProgram {
+
+	/** Delay between generations in ms. */
+	private static final int DELAY = 100;
+
+	/** Random generator instance. */
+	private RandomGenerator rgen = RandomGenerator.getInstance();
+
+	@Override
+	public void run() {
+		// Set new "random" seed.
+		rgen.setSeed(System.nanoTime());
+
+		// Ask the user for the game size, cell size, and the start probability.
+		int dimensions = readInt("Set the size of the game field: ", 1, 1024);
+		int cellSize = readInt("Set the size of the cells: ", 1, 10);
+		double startProbability = readDouble("Set the start probability of a cell being alive: ", 0.0, 1.0);
+
+		// Set the window size.
+		setSize(dimensions * cellSize, dimensions * cellSize);
+
+		// Create and draw the game field.
+		boolean[][] cells = createNewField(dimensions, startProbability);
+		drawField(cells, cellSize);
+
+		// Wait for user input.
+		waitForClick();
+		while (true) {
+			// Calculate the next cycle and display it, then wait.
+			cells = calculateNextGeneration(cells);
+			drawField(cells, cellSize);
+			pause(DELAY);
+		}
+	}
+
+	/**
+	 * Creates a new game cell field and initializes each cell according to the
+	 * start probability.
+	 * 
+	 * @param dimensions       of the game field.
+	 * @param startProbability sets the start probability of a cell being alive.
+	 * @return the game field array as boolean[][].
+	 */
+	public boolean[][] createNewField(int dimensions, double startProbability) {
+
+		// initialize the array that represents the screen
+		boolean[][] array = new boolean[dimensions][dimensions];
+
+		// filling the array with booleans
+		for (int x = 0; x < dimensions; x++) {
+			for (int y = 0; y < dimensions; y++) {
+
+				// true or not depending on the boolean
+				boolean isAlive = rgen.nextBoolean(startProbability);
+
+				// creating a cell in the array
+				if (isAlive) {
+					array[x][y] = true;
+				} else {
+					array[x][y] = false;
+				}
+
+			}
+		}
+
+		return array;
+
+	}
+
+	/**
+	 * Draws the given cell field using GRects.
+	 * 
+	 * @param cells    the cell array as boolean[][]
+	 * @param cellSize the individual size of the cell rects.
+	 */
+	public void drawField(boolean[][] cells, int cellSize) {
+		// Removes all objects from the canvas.
+		removeAll();
+
+		for (int x = 0; x < cells.length; x++) {
+			for (int y = 0; y < cells.length; y++) {
+				GRect cell = new GRect(x * cellSize, y * cellSize, cellSize, cellSize);
+
+				// creating a cell if it´s true
+				if (cells[x][y]) {
+
+					// filling it and making it bright green
+					cell.setFilled(true);
+					Color brightGreen = new Color(0, 255, 51);
+					cell.setFillColor(brightGreen);
+
+					// painting on the canvas
+					add(cell);
+
+				}
+
+			}
+		}
+
+	}
+
+	/**
+	 * Calculates the next generation and returns it. You can create further private
+	 * methods to split up the task in several sub-tasks.
+	 * 
+	 * @param cells the cell array as boolean[][]
+	 * @return TNG as boolean[][]
+	 */
+	public boolean[][] calculateNextGeneration(boolean[][] cells) {
+
+		// new boolean that represents the new generation
+		boolean[][] nextGenerationOfCells = new boolean[cells.length][cells[0].length];
+
+		// initializing for later use
+		int newCellGenerated;
+
+		// for loops that creates the new generation
+		for (int i = 0; i < cells.length; i++) {
+			for (int j = 0; j < cells.length; j++) {
+
+				// Checking if cells are near cells
+				newCellGenerated = amountOfNearCells(cells, i, j);
+
+				// creating new cells if they match the rules of the game
+				if (stayingAlive(newCellGenerated, cells[i][j])) {
+
+					nextGenerationOfCells[i][j] = true;
+				}
+			}
+		}
+		return nextGenerationOfCells;
+	}
+
+	/**
+	 * Method that checks the amount of cells nearby.
+	 * 
+	 * @param cells  the current cells on the board
+	 * @param above  x-achses
+	 * @param beyond y-achses
+	 * @return the amount of cells near other cells
+	 */
+	private int amountOfNearCells(boolean[][] cells, int above, int beyond) {
+
+		// small if/else statement that makes the current cell 1 or 0
+		int livingOrRip = cells[above][beyond] ? -1 : 0;
+		for (int o = above - 1; o <= above + 1; o++) {
+			for (int p = beyond - 1; p <= beyond + 1; p++) {
+				if (onTheScreen(cells, o, p) && cells[o][p]) {
+
+					livingOrRip++;
+				}
+			}
+		}
+
+		return livingOrRip;
+	}
+
+	/**
+	 * Method that determines whether a cell stays alive or not.
+	 * 
+	 * @param amountOfNearCells Important for the rules
+	 * @param alive             whether the cell is alive or not before this occurs
+	 * @return if the cell stays alive or not
+	 */
+	public boolean stayingAlive(int amountOfNearCells, boolean alive) {
+
+		// cell stays alive if 2 or 3 cells are near it
+		if (alive && (amountOfNearCells == 2 || amountOfNearCells == 3)) {
+			return true;
+		}
+		// new cell is created if 3 cells are near
+		else if (!alive && amountOfNearCells == 3) {
+			return true;
+		}
+		// anything else DIES
+		else {
+			return false;
+		}
+	}
+
+	/**
+	 * Method that determines whether the cells are still on the screen or not.
+	 * 
+	 * @param screen The screen the cells are placed on
+	 * @param above  X-Achses
+	 * @param beyond Y-Achses
+	 * @return whether the cell is still on the screen or not
+	 */
+	private boolean onTheScreen(boolean[][] screen, int above, int beyond) {
+		return above >= 0 && above < screen.length && beyond >= 0 && beyond < screen.length;
+
+	}
+
+	/**
+	 * Main method that gets the ball rolling.
+	 * 
+	 * @param args i have no clue
+	 */
+	public static void main(String[] args) {
+		new GameOfLife().start();
+	}
+
+}
