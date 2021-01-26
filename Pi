@@ -1,0 +1,103 @@
+import java.awt.Color;
+import acm.graphics.GOval;
+import acm.graphics.GPoint;
+import acm.graphics.GRect;
+import acm.program.GraphicsProgram;
+import acm.util.RandomGenerator;
+
+/**
+ * 
+ * This program computes PI by using points and a circle.
+ *
+ */
+public class PiApproximator extends GraphicsProgram {
+
+	/**
+	 * Initializing a randomgenerator for later use.
+	 */
+	private RandomGenerator rdm = RandomGenerator.getInstance();
+
+	/**
+	 * Randomly generates a new point whose x and y coordinates lie between -1 and
+	 * 1.
+	 * 
+	 * @return random point.
+	 */
+	public GPoint randomPoint() {
+		double x = rdm.nextDouble(-1.0, 1.0);
+		double y = rdm.nextDouble(-1.0, 1.0);
+		return new GPoint(x, y);
+
+	}
+
+	/**
+	 * Checks if the point with the given coordinates is inside the circle with
+	 * radius 1 centered at the coordinate system's origin.
+	 * 
+	 * @param unitPoint the point to check.
+	 * @return {@code true} if the point is inside the circle, {@code false} if it's
+	 *         not.
+	 */
+	public boolean isInCircle(GPoint unitPoint) {
+		double x = unitPoint.getX();
+		double y = unitPoint.getY();
+		return x * x + y * y <= 1;
+	}
+
+	/**
+	 * Run method computes PI and makes it visible.
+	 */
+	public void run() {
+
+		// Drawing the square
+		GRect square = new GRect(0, 0, 400, 400);
+		add(square);
+
+		double pointsInsideCircle = 0;
+
+		// Drawing the 10000 points and computing the location for the visible points
+		for (int i = 0; i < 10000; i++) {
+
+			// Setting a point that is checked and placed on the canvas
+			GPoint pointOfInterest = new GPoint(randomPoint());
+
+			// Computing the location on the xAchses for a given point
+			double x = ((pointOfInterest.getX()) * 200 + 200);
+			double y = ((pointOfInterest.getY()) * 200 + 200);
+
+			GOval visiblePoint = new GOval(x, y, 1, 1);
+
+			// Computing the number of points inside the circle
+			// Changing the color of the points that were made visible
+			if (isInCircle(pointOfInterest)) {
+				pointsInsideCircle++;
+
+				visiblePoint.setColor(Color.BLUE);
+				visiblePoint.setFillColor(Color.BLUE);
+
+			} else {
+
+				visiblePoint.setColor(Color.LIGHT_GRAY);
+				visiblePoint.setFillColor(Color.LIGHT_GRAY);
+			}
+
+			add(visiblePoint);
+
+		}
+
+		// Actually computing PI with the following formula
+		double pi = (pointsInsideCircle / 50000.0) * 4;
+		println(pi);
+
+	}
+
+	/**
+	 * starting the program.
+	 * 
+	 * @param args there are no arguments
+	 */
+	public static void main(String[] args) {
+		new PiApproximator().start();
+	}
+
+}
